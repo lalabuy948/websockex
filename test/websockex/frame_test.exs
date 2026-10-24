@@ -487,6 +487,18 @@ defmodule WebSockex.FrameTest do
       assert unmask(mask, masked_payload) == payload
     end
 
+    test "masks every payload length, including the 1 to 3 byte tail" do
+      for len <- 0..9 do
+        payload = :crypto.strong_rand_bytes(len)
+
+        assert {:ok,
+                <<1::1, 0::3, 2::4, 1::1, ^len::7, mask::bytes-size(4), masked_payload::binary>>} =
+                 Frame.encode_frame({:binary, payload})
+
+        assert unmask(mask, masked_payload) == payload
+      end
+    end
+
     test "encodes a text fragment frame" do
       payload = "Lemon Pies are Pies."
       len = byte_size(payload)
